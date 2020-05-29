@@ -1,5 +1,5 @@
 # coding: utf-8
-pascal_root = '/media/D/DataSet/IS/VOCdevkit/VOC2012'
+pascal_root = '/content/Food-Volume-Estimation/Segmentation Mask/VOCdevkit/VOC2012'
 
 from utils.pascal_voc import get_augmented_pascal_image_annotation_filename_pairs
 from utils.tf_records import write_image_annotation_pairs_to_tfrecord
@@ -13,6 +13,6 @@ write_image_annotation_pairs_to_tfrecord(filename_pairs=overall_val_image_annota
                                          tfrecords_filename='pascal_val.tfrecords')
 
 write_image_annotation_pairs_to_tfrecord(filename_pairs=overall_train_image_annotation_filename_pairs,
-                                         tfrecords_filename='pascal_train.tfrecords')
+                                         tfrecords_filename='pascal_augmented_train.tfrecords')
 
  
