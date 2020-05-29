@@ -27,14 +27,14 @@ tf.app.flags.DEFINE_integer('num_classes', 21, '')
 tf.app.flags.DEFINE_string('gpu_list', '0,1', '')
 tf.app.flags.DEFINE_string('checkpoint_path', 'checkpoints/', '')
 tf.app.flags.DEFINE_string('logs_path', 'logs/', '')
-tf.app.flags.DEFINE_boolean('restore', True, 'whether to resotre from checkpoint')
+tf.app.flags.DEFINE_boolean('restore', False, 'whether to resotre from checkpoint')
 tf.app.flags.DEFINE_integer('save_checkpoint_steps', 2000, '')
 tf.app.flags.DEFINE_integer('save_summary_steps', 10, '')
 tf.app.flags.DEFINE_integer('save_image_steps', 100, '')
-tf.app.flags.DEFINE_string('training_data_path', 'data/pascal_augmented_train.tfrecords', '')
-tf.app.flags.DEFINE_string('pretrained_model_path', 'data/resnet_v1_101.ckpt', '')
+tf.app.flags.DEFINE_string('training_data_path', 'pascal_augmented_train.tfrecords', '')
+tf.app.flags.DEFINE_string('pretrained_model_path', 'inception_resnet_v2_2016_08_30.ckpt', '')
 tf.app.flags.DEFINE_integer('decay_steps',20000,'')
-tf.app.flags.DEFINE_integer('decay_rate',0.1,'')
+tf.app.flags.DEFINE_float('decay_rate',0.1,'')
 FLAGS = tf.app.flags.FLAGS
 
 
@@ -70,16 +70,16 @@ def average_gradients(tower_grads):
 def build_image_summary():
     log_image_data = tf.placeholder(tf.uint8, [None, None, 3])
     log_image_name = tf.placeholder(tf.string)
-    log_image = gen_logging_ops._image_summary(log_image_name, tf.expand_dims(log_image_data, 0), max_images=1)
+    log_image = gen_logging_ops.image_summary(log_image_name, tf.expand_dims(log_image_data, 0), max_images=1)
     _ops.add_to_collection(_ops.GraphKeys.SUMMARIES, log_image)
     return log_image, log_image_data, log_image_name
 
 def main(argv=None):
     gpus = range(len(FLAGS.gpu_list.split(',')))
     pascal_voc_lut = pascal_segmentation_lut()
-    class_labels = pascal_voc_lut.keys()
+    class_labels = list(pascal_voc_lut.keys())
     with open('data/color_map', 'rb') as f:
-        color_map = pickle.load(f)
+        color_map = pickle.load(f, encoding="bytes")
 
     os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.gpu_list
     now = datetime.datetime.now()
@@ -149,10 +149,10 @@ def main(argv=None):
     summary_writer = tf.summary.FileWriter(FLAGS.logs_path+StyleTime, tf.get_default_graph())
 
 
-    if FLAGS.pretrained_model_path is not None:
-        variable_restore_op = slim.assign_from_checkpoint_fn(FLAGS.pretrained_model_path,
-                                                             slim.get_trainable_variables(),
-                                                             ignore_missing_vars=True)
+    # if FLAGS.pretrained_model_path is not None:
+    #     variable_restore_op = slim.assign_from_checkpoint_fn(FLAGS.pretrained_model_path,
+    #                                                          slim.get_trainable_variables(),
+    #                                                          ignore_missing_vars=True)
 
     global_vars_init_op = tf.global_variables_initializer()
     local_vars_init_op = tf.local_variables_initializer()
@@ -169,8 +169,8 @@ def main(argv=None):
             saver.restore(sess, ckpt)
         else:
             sess.run(init)
-            if FLAGS.pretrained_model_path is not None:
-                variable_restore_op(sess)
+            # if FLAGS.pretrained_model_path is not None:
+            #     variable_restore_op(sess)
 
         start = time.time()
         coord = tf.train.Coordinator()
@@ -234,4 +234,3 @@ def main(argv=None):
 
 if __name__ == '__main__':
     tf.app.run()
-
